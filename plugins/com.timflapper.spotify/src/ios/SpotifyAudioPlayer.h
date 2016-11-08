@@ -1,0 +1,15 @@
+//
+//  SpotifyAudioPlayer.h
+//  SpotifyPlugin
+//
+//  Created by Tim Flapper on 08/05/14.
+//
+//
+
+#import <SpotifyAudioPlayback/SpotifyAudioPlayback.h>
+#import <SpotifyAuthentication/SpotifyAuthentication.h>
+#import <SpotifyMetadata/SpotifyMetadata.h>
+@interface SpotifyAudioPlayer : SPTAudioStreamingController<SPTAudioStreamingDelegate, SPTAudioStreamingPlaybackDelegate>
++ (instancetype)getInstanceByID:(NSString *)ID;
+@property NSString *instanceID;
+@end
