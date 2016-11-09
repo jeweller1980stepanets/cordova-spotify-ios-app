@@ -40,11 +40,29 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
-        Spotify.Events.onPlayerPlay = function(){alert('!')};
+        
+        
+        Spotify.Events.onMetadataChanged = function(args){
+            document.getElementById('cur_track').innerHTML = args[0];
+            document.getElementById('artist').innerHTML = args[1];
+            document.getElementById('_album').innerHTML = args[2];
+            document.getElementById('duration').innerHTML =Math.floor(args[3]);
+            
+        };
+        Spotify.Events.onNext = function(arg){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onPlayerPlay = function(){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onPrev = function(arg){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onPause = function(arg){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onPlay = function(arg){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onTrackChanged = function(arg){document.getElementById('action').innerHTML = arg[0];};
+        Spotify.Events.onPosition = function(arg){document.getElementById('media_time').innerHTML = Math.floor(arg/1000) + " sec"};
+        Spotify.Events.onAudioFlush = function(arg){document.getElementById('seek').innerHTML = arg[0];};
+        Spotify.Events.onVolumeChanged = function(arg){document.getElementById('action').innerHTML = arg;};
+        
         document.getElementById('log').addEventListener('click',function(){Spotify.login("50ef88bdcdd3441f94ec7e1f2fb781a6","iostestshema://callback")});
         document.getElementById('playAlbum').addEventListener('click',function(){Spotify.play("spotify:album:75Sgdm3seM5KXkEd46vaDb")});
         document.getElementById('playPlaylist').addEventListener('click',function(){Spotify.play("spotify:user:spotify:playlist:2yLXxKhhziG2xzy7eyD4TD")});
-        document.getElementById('playTrack').addEventListener('click',function(){Spotify.play("spotify:track:3qRNQHagYiiDLdWMSOkPGG")});
+        document.getElementById('playTrack').addEventListener('click',function(){Spotify.play("spotify:track:5siM4eG36axvG3alLNnsAx")});
         document.getElementById('pause').addEventListener('click',function(){Spotify.pause()});
         document.getElementById('next').addEventListener('click',function(){Spotify.next()});
         document.getElementById('prev').addEventListener('click',function(){Spotify.prev()});
@@ -58,6 +76,8 @@ var app = {
         document.getElementById('slider_volume').addEventListener('click',function(e){
          var valX = (e.offsetX)*100/220;
          Spotify.setVolume(valX)});
+        
+        
     }
 };
 

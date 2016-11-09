@@ -13,6 +13,8 @@ NSString *dateToString(NSDate *date);
 NSDate *stringToDate(NSString *dateString);
 
 @interface SpotifyPlugin : CDVPlugin
+-(void)myPluginMethod:(CDVInvokedUrlCommand*)command;
+-(id)init;
 -(void)login :(CDVInvokedUrlCommand*)command;
 -(void)play:(CDVInvokedUrlCommand*)command;
 -(void)pause:(CDVInvokedUrlCommand*)command;
@@ -21,8 +23,10 @@ NSDate *stringToDate(NSString *dateString);
 -(void)logout:(CDVInvokedUrlCommand*)command;
 -(void)seek:(CDVInvokedUrlCommand*)command;
 -(void)volume:(CDVInvokedUrlCommand*)command;
-/* Linked to SPTAuth */
-- (void)dispatchEvent:(NSString *)type;
 -(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeToTrack:(NSDictionary *)trackMetadata;
-- (void)dispatchEvent:(NSString *)type withArguments:(NSArray *)args;
+-(void)audioStreamingDidSkipToNextTrack:(SPTAudioStreamingController *)audioStreaming;
+-(void)audioStreamingDidSkipToPreviousTrack:(SPTAudioStreamingController *)audioStreaming;
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didSeekToOffset:(NSTimeInterval)offset;//????
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangePosition:(NSTimeInterval)position;
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeVolume:(SPTVolume)volume;
 @end

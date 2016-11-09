@@ -75,9 +75,34 @@ play:function(val){
                      )
     },
     Events : {
-        onPlayerPlay : function(){
-            alert('!');
+        onPlayerPlay : function(args){},
+        onMetadataChanged :function(args){},
+        onPrev : function(args){
+            //arg[0] - action
+        },
+        onNext : function(args){
+            //arg[0] - action
+        },
+        onPause : function(args){
+            //arg[0] - action
+        },
+        onPlay : function(args){
+            //arg[0] - action
+        },
+        onAudioFlush : function(arg){
+            //arg[0] - position (ms)
+        },
+        onTrackChanged : function(arg){
+            //arg[0] - action
+        },
+        onPosition : function(arg){
+            //arg[0] - position ms
+        },
+        onVolumeChanged : function(arg){
+            //arg - volume betwen 0.0 ....1.0
         }
+        
     }
+    
 };
 module.exports =Spotify;

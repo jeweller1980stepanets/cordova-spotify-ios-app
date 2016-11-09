@@ -16,7 +16,7 @@
 static NSMutableDictionary *instances;
 
 @synthesize delegate, playbackDelegate;
-
+/*
  + (void)initialize
  {
      NSLog(@"SpotifyAudioPlayer init");
@@ -65,7 +65,7 @@ static NSMutableDictionary *instances;
  [instances setObject:self
  forKey: _instanceID];
  }*/
- 
+ /*
  return self;
  }
  
@@ -166,5 +166,5 @@ static NSMutableDictionary *instances;
  {
  [self dispatchEvent:@"skippedToPreviousTrack"];
  }
-
+*/
 @end

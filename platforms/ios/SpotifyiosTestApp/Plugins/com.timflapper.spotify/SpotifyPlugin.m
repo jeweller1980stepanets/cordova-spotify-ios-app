@@ -16,15 +16,23 @@
 #import "SpotifyAudioPlayer.h"
 #import <objc/runtime.h>
 
-@interface SpotifyPlugin()<SPTAudioStreamingDelegate,SPTAudioStreamingPlaybackDelegate,WKUIDelegate>
+@interface SpotifyPlugin()<SPTAudioStreamingDelegate,SPTAudioStreamingPlaybackDelegate>
 @property (nonatomic, strong) SPTAudioStreamingController *player;
-@property (nonatomic, readwrite) WKWebView *view;
+
 @end;
 
 @implementation SpotifyPlugin
 
+- (void)myPluginMethod:(CDVInvokedUrlCommand*)command
+{
+    // Check command.arguments here.
+}
 //CDVViewController *mWebView;
-
+- (id)init
+{
+    
+    self = [super init];
+}
 -(void)login :(CDVInvokedUrlCommand*)command
 {
     
@@ -85,10 +93,7 @@
     }];
     [SpotifyAudioPlayer initialize];
     NSLog(@"token %@",[[[SPTAuth defaultInstance] session] accessToken] );
-   // SPTAuth *auth = [SPTAuth defaultInstance];
-    //NSError *error = nil;
-    
-    if (self.player == nil) {
+       if (self.player == nil) {
         NSError *error = nil;
         self.player = [SPTAudioStreamingController sharedInstance];
         if ([self.player startWithClientId:auth.clientID audioController:nil allowCaching:YES error:&error]) {
@@ -127,12 +132,8 @@
 {
     NSLog(@"SpotifyPlayer action next");
     [self.player skipNext:nil];
+    [self myPluginMethod:command];
     
-    NSString *hader = @"alert('123')";
-    // _mWebView = self.viewController;
-    NSError *error = nil;
-    //[_mWebView evaluateJavaScript:hader completionHandler:nil];
-   
 }
 -(void)prev:(CDVInvokedUrlCommand*)command
 {
@@ -144,8 +145,10 @@
     NSLog(@"SpotifyPlayer action logout");
     if (self.player) {
         [self.player setIsPlaying:NO callback:nil];
-        [self.player logout];
-        }
+        //[self.player logout];
+        SPTAuth *auth = [SPTAuth defaultInstance];
+       [[UIApplication sharedApplication] openURL:auth.spotifyWebAuthenticationURL];
+    }
 }
 -(void)seek:(CDVInvokedUrlCommand*)command
 {
@@ -169,6 +172,11 @@
                 [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             }];
         }];
+    NSMutableString *str = [NSMutableString stringWithString:@"Spotify.Events.onAudioFlush(["];
+    [str appendFormat:@"%f])",offset];
+    
+    [self.commandDelegate evalJs:str];
+
     NSLog(@"SpotifyPlayer action seek %f ms",offset);
 }
 -(void)volume:(CDVInvokedUrlCommand*)command
@@ -182,11 +190,11 @@
         volume/=100;
             [self.player setVolume:volume callback:^(NSError *error) {
                 CDVPluginResult *pluginResult;
-                 NSString *hader = @"Spotify.Events.onPlayerPlay";
+                
                 if (error != nil) {
                     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: error.localizedDescription];
                 } else {
-                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:hader];
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                 }
                 
                 [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -195,51 +203,33 @@
    
 
 }
-- (void)dispatchEvent:(NSString *)type
-{
-    //============================================
-   
-        //============================================
-    
-    NSLog(@"SpotifyPlayer dispatchEvent");
-    [self dispatchEvent:type withArguments:@[]];
-}
-- (void)dispatchEvent:(NSString *)type withArguments:(NSArray *)args
-{
-    NSString *hader = @"Spotify.Events.onPlayerPlay";
-   
-    NSLog(@"SpotifyPlayer dispatchEvent with args");
-    NSDictionary *info = @{@"type": type,
-                           @"args": args};
-    
-    NSNotification *note = [NSNotification notificationWithName:@"event" object:self userInfo:hader];
-    NSLog(@"SpotifyPlayer dispatchEvent with args note %@",note);
-    [[NSNotificationCenter defaultCenter] postNotification:note];
-}
--(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeToTrack:(NSDictionary *)trackMetadata
-{
-    NSLog(@"SpotifyPlayer track changed");
-    if(trackMetadata != nil){
-        [self dispatchEvent:@"trackChanged" withArguments:@[trackMetadata]];
-        NSLog(@"SpotifyPlayer track changed");
-        
-        NSString *hader = @"alert('123')";
-       // _mWebView = [self webView];
-        NSError *error = nil;
-        [_mWebView evaluateJavaScript:hader completionHandler:nil];
-    }
-}
+/////////////////////////////////////////////////////////////////
+//                          EVENTS                             //
+ ////////////////////////////////////////////////////////////////
+
 - (void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangePlaybackStatus:(BOOL)isPlaying {
     NSLog(@"is playing = %d", isPlaying);
+    
     if (isPlaying) {
-        //[self activateAudioSession];
-        NSArray *arr = [NSArray arrayWithObject:self];
         
-        [self dispatchEvent:@"trackChanged" withArguments:arr];
+        [self.commandDelegate evalJs:@"Spotify.Events.onPlay(['Player play'])"];
+       
     } else {
-       // [self deactivateAudioSession];
+       [self.commandDelegate evalJs:@"Spotify.Events.onPause(['Player paused'])"];
     }
 }
+
+
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeMetadata:(SPTPlaybackMetadata *)metadata {
+    [self.commandDelegate evalJs:@"Spotify.Events.onTrackChanged(['Track changed'])"];
+    NSMutableString *str = [NSMutableString stringWithString:@"Spotify.Events.onMetadataChanged(["];
+    [str appendFormat:@"'%@',",metadata.currentTrack.name ];
+    [str appendFormat:@"'%@',",metadata.currentTrack.artistName ];
+    [str appendFormat:@"'%@',",metadata.currentTrack.albumName ];
+    [str appendFormat:@"%f])",metadata.currentTrack.duration ];
+    [self.commandDelegate evalJs:str];
+}
+
 -(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didReceivePlaybackEvent:(SpPlaybackEvent)event withName:(NSString *)name {
     NSLog(@"didReceivePlaybackEvent: %zd %@", event, name);
     NSLog(@"isPlaying=%d isRepeating=%d isShuffling=%d isActiveDevice=%d positionMs=%f",
@@ -249,5 +239,37 @@
           self.player.playbackState.isActiveDevice,
           self.player.playbackState.position);
 }
+-(void)audioStreamingDidSkipToNextTrack:(SPTAudioStreamingController *)audioStreaming
+{
+    [self.commandDelegate evalJs:@"Spotify.Events.onNext(['Next trak'])"];
+}
+-(void)audioStreamingDidSkipToPreviousTrack:(SPTAudioStreamingController *)audioStreaming
+{
+    [self.commandDelegate evalJs:@"Spotify.Events.onPrev(['Previos trak'])"];
+}
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeToTrack:(NSDictionary *)trackMetadata
+{
+    if(trackMetadata != nil){
+        [self.commandDelegate evalJs:@"Spotify.Events.onTrackChanged(['Track changed'])"];
+    }
+}
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didSeekToOffset:(NSTimeInterval)offset
+{
+   // [self.commandDelegate evalJs:@"alert('!')"];
+}
+- (void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangePosition:(NSTimeInterval)position {
+    NSMutableString *str = [NSMutableString stringWithString:@"Spotify.Events.onPosition("];
+    [str appendFormat:@"%f)",position*1000];
+    
+    [self.commandDelegate evalJs:str];
+    
+}
+-(void)audioStreaming:(SPTAudioStreamingController *)audioStreaming didChangeVolume:(SPTVolume)volume
+{
+    NSMutableString *str = [NSMutableString stringWithString:@"Spotify.Events.onVolumeChanged("];
+    [str appendFormat:@"%f)",volume];
+    
+    [self.commandDelegate evalJs:str];
 
+}
 @end
